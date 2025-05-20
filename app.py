@@ -6,6 +6,23 @@ import json
 import random
 from sqlalchemy.sql.expression import func
 
+# Determinar si estamos en Vercel
+IS_VERCEL = os.environ.get('VERCEL') == '1' # Vercel setea VERCEL=1
+
+if IS_VERCEL:
+    DATABASE_PATH = "/tmp/babynames_v2.db"
+    # Asegurarse que el archivo names_data.json se lea desde la raíz del proyecto
+    # ya que /tmp es solo para archivos escribibles, no para tus archivos de código fuente.
+    # El open('names_data.json', ...) debería funcionar si names_data.json está en la raíz.
+else:
+    # Configuración local (puedes seguir usando instance/ o la raíz)
+    # Si usas instance/, asegúrate que la carpeta exista.
+    INSTANCE_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance')
+    if not os.path.exists(INSTANCE_FOLDER):
+        os.makedirs(INSTANCE_FOLDER)
+    DATABASE_PATH = os.path.join(INSTANCE_FOLDER, 'babynames_v2.db')
+    # DATABASE_PATH = 'babynames_v2.db' # O directamente en la raíz para local
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'tu_clave_secreta_muy_secreta_revisada'
 DATABASE_FILE = 'babynames_v2.db'
