@@ -1,0 +1,149 @@
+{% extends "layout.html" %}
+{% block title %}Mis Favoritos - {{ current_user.username | capitalize }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
+    <div class="text-center mb-8 md:mb-12">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-purple-700">Tus Nombres Favoritos</h1>
+        <p class="text-base sm:text-lg text-gray-600 mt-2 sm:mt-3">
+            ¡Hola, {{ current_user.username | capitalize }}! Aquí puedes ver y <strong class="text-purple-600">ordenar</strong> tus nombres preferidos.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+        
+        <!-- Columna de Niños en Común -->
+        <div class="bg-blue-50 p-4 sm:p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl sm:text-3xl font-semibold text-blue-600 mb-4 sm:mb-6 text-center">
+                <span class="align-middle text-2xl sm:text-3xl">♂️</span> Niños Favoritos
+            </h2>
+            {% if liked_boy_names %}
+                <ul id="sortable-boys" class="space-y-3 sm:space-y-4 cursor-grab"> {# ID para SortableJS y cursor #}
+                    {% for name in liked_boy_names %}
+                    <li data-id="{{ name.id }}" class="name-item bg-white p-3 sm:p-4 rounded-lg shadow-md flex justify-between items-center">
+                        <div class="flex items-center">
+                            {# Podio - se mostrará con CSS basado en el orden inicial y se puede actualizar con JS si el orden cambia #}
+                            <span class="podium-icon mr-3 text-2xl hidden"></span> 
+                            <div>
+                                <span class="text-xl sm:text-2xl font-medium text-blue-700">{{ name.name_text }}</span>
+                                <p class="text-xs sm:text-sm text-gray-500 capitalize mt-1">{{ name.category }} {% if name.ranking %}(#{{ name.ranking }}){% endif %}</p>
+                            </div>
+                        </div>
+                        <form method="POST" action="{{ url_for('unlike_name', name_id=name.id) }}">
+                            <button type="submit" class="text-red-500 hover:text-red-700 font-semibold text-sm ml-2 p-1 rounded hover:bg-red-100 transition-colors" aria-label="Quitar {{ name.name_text }}">✕</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center py-8 sm:py-10">
+                    <p class="text-lg sm:text-xl text-gray-500">😢 Aún no tienes nombres de niño favoritos.</p>
+                    <p class="text-gray-400 mt-2 text-sm sm:text-base">¡Sigue eligiendo!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Columna de Niñas en Común -->
+        <div class="bg-pink-50 p-4 sm:p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl sm:text-3xl font-semibold text-pink-600 mb-4 sm:mb-6 text-center">
+                <span class="align-middle text-2xl sm:text-3xl">♀️</span> Niñas Favoritas
+            </h2>
+            {% if liked_girl_names %}
+                <ul id="sortable-girls" class="space-y-3 sm:space-y-4 cursor-grab"> {# ID para SortableJS y cursor #}
+                    {% for name in liked_girl_names %}
+                    <li data-id="{{ name.id }}" class="name-item bg-white p-3 sm:p-4 rounded-lg shadow-md flex justify-between items-center">
+                        <div class="flex items-center">
+                            <span class="podium-icon mr-3 text-2xl hidden"></span>
+                            <div>
+                                <span class="text-xl sm:text-2xl font-medium text-pink-700">{{ name.name_text }}</span>
+                                <p class="text-xs sm:text-sm text-gray-500 capitalize mt-1">{{ name.category }} {% if name.ranking %}(#{{ name.ranking }}){% endif %}</p>
+                            </div>
+                        </div>
+                        <form method="POST" action="{{ url_for('unlike_name', name_id=name.id) }}">
+                            <button type="submit" class="text-red-500 hover:text-red-700 font-semibold text-sm ml-2 p-1 rounded hover:bg-red-100 transition-colors" aria-label="Quitar {{ name.name_text }}">✕</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center py-8 sm:py-10">
+                     <p class="text-lg sm:text-xl text-gray-500">😢 Aún no tienes nombres de niña favoritos.</p>
+                     <p class="text-gray-400 mt-2 text-sm sm:text-base">¡Sigue eligiendo!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-12 md:mt-16 text-center">
+        <a href="{{ url_for('index') }}"
+           class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 text-base sm:text-lg">
+            Volver a Elegir Nombres
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }} {# Importante si layout.html ya tiene un bloque de scripts con SortableJS #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const podiumIcons = ['🥇', '🥈', '🥉']; // Oro, Plata, Bronce
+
+    function updatePodium(listElementId) {
+        const list = document.getElementById(listElementId);
+        if (!list) return;
+
+        const items = list.querySelectorAll('li.name-item');
+        items.forEach((item, index) => {
+            const podiumSpan = item.querySelector('.podium-icon');
+            if (podiumSpan) {
+                if (index < podiumIcons.length) {
+                    podiumSpan.textContent = podiumIcons[index];
+                    podiumSpan.classList.remove('hidden');
+                } else {
+                    podiumSpan.classList.add('hidden');
+                    podiumSpan.textContent = ''; // Limpiar por si acaso
+                }
+            }
+        });
+    }
+
+    const sortableBoysList = document.getElementById('sortable-boys');
+    if (sortableBoysList) {
+        new Sortable(sortableBoysList, {
+            animation: 150, // ms, animación de arrastre
+            ghostClass: 'bg-blue-200', // Clase para el placeholder fantasma
+            //chosenClass: "border-purple-500", // Clase para el elemento elegido
+            //dragClass: "opacity-50", // Clase para el elemento que se arrastra
+            onEnd: function (/**Event*/evt) {
+                // evt.oldIndex;  // índice original
+                // evt.newIndex;  // nuevo índice
+                console.log('Boys list reordered. Old index:', evt.oldIndex, 'New index:', evt.newIndex);
+                updatePodium('sortable-boys');
+
+                // Aquí es donde enviarías el nuevo orden al backend si quisieras persistencia
+                // const itemEl = evt.item; // elemento DOM arrastrado
+                // const newOrderIds = Array.from(sortableBoysList.children).map(li => li.dataset.id);
+                // fetch('/update_favorite_order/boys', { method: 'POST', body: JSON.stringify({order: newOrderIds}), ... });
+            }
+        });
+        updatePodium('sortable-boys'); // Aplicar podio inicial
+    }
+
+    const sortableGirlsList = document.getElementById('sortable-girls');
+    if (sortableGirlsList) {
+        new Sortable(sortableGirlsList, {
+            animation: 150,
+            ghostClass: 'bg-pink-200',
+            onEnd: function (evt) {
+                console.log('Girls list reordered. Old index:', evt.oldIndex, 'New index:', evt.newIndex);
+                updatePodium('sortable-girls');
+                // const newOrderIds = Array.from(sortableGirlsList.children).map(li => li.dataset.id);
+                // fetch('/update_favorite_order/girls', { method: 'POST', body: JSON.stringify({order: newOrderIds}), ... });
+            }
+        });
+        updatePodium('sortable-girls'); // Aplicar podio inicial
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,68 @@
+# Entornos virtuales
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Archivos de Python compilados y caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de configuración local y sensibles (si los tienes)
+# instance/  # Si usas la carpeta 'instance' de Flask para configuraciones
+# .env       # Para variables de entorno si usas python-dotenv
+
+# Bases de datos SQLite
+*.db
+*.sqlite
+*.sqlite3
+# Si tu archivo de base de datos tiene un nombre específico y quieres excluirlo:
+babynames_v2.db 
+
+# Archivos de sesión de Flask (si usas almacenamiento de sesión en el sistema de archivos)
+# flask_session/
+
+# Archivos de IDEs y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Cobertura de Tests
+.coverage
+coverage.xml
+htmlcov/
+
+# Dependencias de Node (si usas npm para Tailwind, etc.)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json # A veces se incluye, a veces no. Si lo versionas, todos usan las mismas sub-dependencias.
+                  # Si no lo versionas, `npm install` puede tomar versiones más nuevas de sub-dependencias.
+                  # Para consistencia, a menudo es bueno versionarlo. Por ahora, lo dejaré comentado.
+# yarn.lock
+
+# Archivos de compilación de Tailwind (si el CSS generado está en una ruta específica y quieres generarlo en el despliegue)
+# static/css/style.css # Si prefieres que cada desarrollador/servidor lo compile
+
+# Archivos de Flask-Migrate (si lo usaste y no quieres versionar las migraciones)
+# Aunque generalmente SÍ quieres versionar la carpeta 'migrations'
+# migrations/ 
+
+# Otros archivos específicos de tu proyecto que no deben ser versionados
+# مثلاً:
+# local_settings.py
+# secrets.json

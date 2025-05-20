@@ -1,0 +1,325 @@
+{% extends "layout.html" %}
+{% block title %}Elige Nombres - Swipe It!{% endblock %}
+
+{% block content %}
+
+{# Contenedor para Notificaciones de Logros (Toast) #}
+<div id="achievementToastContainer" class="fixed top-5 right-5 z-50 space-y-3 w-full max-w-xs sm:max-w-sm pointer-events-none">
+    {# Las notificaciones se insertarán aquí por JavaScript #}
+</div>
+
+<div class="flex flex-col items-center justify-center min-h-[70vh] relative overflow-hidden px-4">
+    
+    {# Contenedor para las tarjetas de nombres #}
+    <div id="nameCardContainer" class="relative w-full max-w-md h-72 md:h-80">
+        {# La tarjeta se insertará aquí por JavaScript #}
+    </div>
+
+    {# Botones de acción Y BOTÓN DESHACER #}
+    <div class="flex justify-around mt-8 w-full max-w-md">
+        <button id="passButton" disabled
+                class="action-button w-16 h-16 md:w-20 md:h-20 flex items-center justify-center border-2 border-red-500 text-red-500 rounded-full
+                       hover:bg-red-500 hover:text-white focus:outline-none 
+                       focus:ring-2 focus:ring-red-400 focus:ring-offset-2
+                       transition-all duration-200 text-3xl font-bold disabled:opacity-50 disabled:cursor-not-allowed">
+            ✕
+        </button>
+        
+        <button id="undoButton" disabled
+                class="action-button w-16 h-16 md:w-20 md:h-20 flex items-center justify-center border-2 border-gray-400 text-gray-500 rounded-full
+                       hover:bg-gray-400 hover:text-white focus:outline-none 
+                       focus:ring-2 focus:ring-gray-300 focus:ring-offset-2
+                       transition-all duration-200 text-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed">
+            ↩
+        </button>
+
+        <button id="likeButton" disabled
+                class="action-button w-16 h-16 md:w-20 md:h-20 flex items-center justify-center border-2 border-green-500 text-green-500 rounded-full
+                       hover:bg-green-500 hover:text-white focus:outline-none
+                       focus:ring-2 focus:ring-green-400 focus:ring-offset-2
+                       transition-all duration-200 text-3xl font-bold disabled:opacity-50 disabled:cursor-not-allowed">
+            ♥
+        </button>
+    </div>
+
+    {# Contador de Nombres Restantes #}
+    <div id="remainingCounter" class="mt-6 text-center text-gray-700 text-sm">
+        Nombres únicos por ver: <span id="countValue" class="font-semibold">--</span>
+    </div>
+
+    {# Mensaje si no hay más nombres. Se mostrará/ocultará por JavaScript #}
+    <div id="noMoreNamesMessage" class="bg-white rounded-xl shadow-lg p-8 text-center max-w-md mt-8 hidden">
+         <h2 class="text-2xl font-semibold text-purple-700 mb-4">¡Eso es todo por ahora!</h2>
+         <p class="text-gray-600 mb-6">Parece que has visto todos los nombres disponibles.</p>
+         <a href="{{ url_for('favorites') }}" 
+            class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
+             Ver Mis Favoritos
+         </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{# Hammer.js debe estar incluido en layout.html o aquí si solo se usa en esta página #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    console.log("INDEX.HTML: DOM completamente cargado y parseado.");
+
+    const cardContainer = document.getElementById('nameCardContainer');
+    let currentCard = null; 
+    const likeButton = document.getElementById('likeButton');
+    const passButton = document.getElementById('passButton');
+    const undoButton = document.getElementById('undoButton');
+    const noMoreNamesMessage = document.getElementById('noMoreNamesMessage');
+    const milestoneDynamicDuoMessageEl = document.getElementById('milestoneDynamicDuoMessage');
+    const countValueSpan = document.getElementById('countValue');
+    const achievementToastContainer = document.getElementById('achievementToastContainer');
+    
+    let displayedAchievements = new Set();
+
+    const EMOJIS = ["💖", "✨", "🎉", "🌟", "🎈", "💫", "💡", "👶", "🍼", "🎀", "🎁", "🧸", "😊", "😄", "🥰", "🤔", "🎯", "🚀", "☀️", "🍀", "🥳", "🤩", "😍", "😘", "🤗", "🎊", "🏆", "🥇", "🌈", "🌸", "🌻", "🦋", "🎂", "🧁", "🥂", "🎶", "👏", "🙌", "💯", "🔑", "📚", "🌱", "🐣", "🦆", "🐾", "👣", "👑", "🌠", "🌙", "🔮", "😇", "🥳", "🕺", "💃", "💎", "💡", "🌠", "🗺️", "🧭", "🧸", "🎈", "🎁", "🎨", "🧩", "🪁", "🪄", "🧬", "🔭", "🔬", "💡", "📚", "📈", "📊", "📌", "📍", "🏁", "🚩", "🎌", "🏳️", "🕊️", "☘️", "🌳", "🌴", "🌵", "🌾", "🌿", "🍄", "🌰", "🌼", "🌷", "🌹", "🌺", "🍁", "🍂", "🌊", "🌬️", "🌀", "🌍", "🌎", "🌏", "🌕", "🌖", "🌗", "🌘", "🌑", "🌒", "🌓", "🌔", "🪐", "🔔", "📣", "📢", "💬", "💭", "💤", "☀️", "☁️", "⛈️", "🌤️", "🌥️", "🌦️", "🌧️", "🌨️", "🌩️", "🌪️", "🌫️", "☂️", "☔️"];
+    let hammertime;
+
+    function getRandomEmoji() {
+        return EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+    }
+
+    function showAchievementToast(achievement) {
+        if (!achievement || !achievement.name || displayedAchievements.has(achievement.id)) {
+            console.log("Toast omitido para:", achievement ? achievement.id : 'undefined', "Ya mostrado:", displayedAchievements.has(achievement.id));
+            return; 
+        }
+        displayedAchievements.add(achievement.id);
+        console.log("Mostrando Toast para logro:", achievement.name);
+
+        const toastId = `toast-${achievement.id}-${Date.now()}`;
+        const toastHTML = `
+            <div id="${toastId}" class="bg-green-500 text-white p-4 rounded-lg shadow-xl transform transition-all duration-300 ease-out opacity-0 translate-x-full pointer-events-auto" role="alert" aria-live="assertive">
+                <div class="flex items-center">
+                    <span class="text-3xl mr-3">${achievement.icon || '🏆'}</span>
+                    <div>
+                        <p class="font-bold">¡Logro Desbloqueado!</p>
+                        <p class="text-sm">${achievement.name}: ${achievement.desc}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        achievementToastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toastElement = document.getElementById(toastId);
+        
+        requestAnimationFrame(() => { // Para asegurar que el elemento está en el DOM antes de la transición
+            toastElement.classList.remove('opacity-0', 'translate-x-full');
+            toastElement.classList.add('opacity-100', 'translate-x-0');
+        });
+
+        setTimeout(() => {
+            if (toastElement) {
+                toastElement.classList.remove('opacity-100', 'translate-x-0');
+                toastElement.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => { toastElement.remove(); }, 300);
+            }
+        }, 300);
+    }
+
+    function setupHammer(cardElement) {
+        if (!cardElement) { console.warn("setupHammer: cardElement es null."); return; }
+        console.log("SetupHammer para la tarjeta:", cardElement.dataset.nameId);
+        hammertime = new Hammer(cardElement);
+        cardElement.style.transform = ''; cardElement.style.transition = '';
+        let startX = 0, startY = 0;
+        hammertime.on('panstart', function(ev) {
+            cardElement.style.transition = 'none';
+            const cardRect = cardElement.getBoundingClientRect();
+            const containerRect = cardContainer.getBoundingClientRect();
+            startX = cardRect.left - containerRect.left;
+            startY = cardRect.top - containerRect.top;
+        });
+        hammertime.on('panmove', function (ev) {
+            if (!currentCard) return;
+            const posX = startX + ev.deltaX, posY = startY + ev.deltaY, rotation = ev.deltaX / 20;
+            currentCard.style.transform = `translate(${posX}px, ${posY}px) rotate(${rotation}deg)`;
+            const likeIndicator = currentCard.querySelector('#likeIndicator'), passIndicator = currentCard.querySelector('#passIndicator');
+            if (likeIndicator && passIndicator) {
+                if (ev.deltaX > 30) { likeIndicator.style.opacity = Math.min(ev.deltaX / 100, 1); passIndicator.style.opacity = 0; }
+                else if (ev.deltaX < -30) { passIndicator.style.opacity = Math.min(Math.abs(ev.deltaX) / 100, 1); likeIndicator.style.opacity = 0; }
+                else { likeIndicator.style.opacity = 0; passIndicator.style.opacity = 0; }
+            }
+        });
+        hammertime.on('panend', function (ev) {
+            if (!currentCard) return;
+            const threshold = 100; currentCard.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+            const likeIndicator = currentCard.querySelector('#likeIndicator'), passIndicator = currentCard.querySelector('#passIndicator');
+            if (likeIndicator && passIndicator) { likeIndicator.style.opacity = 0; passIndicator.style.opacity = 0; }
+            if (ev.deltaX > threshold) performAction('like', currentCard.dataset.nameId);
+            else if (ev.deltaX < -threshold) performAction('pass', currentCard.dataset.nameId);
+            else currentCard.style.transform = 'translate(0,0) rotate(0deg)';
+        });
+    }
+    
+    function animateCardOut(direction) {
+        if (!currentCard) return;
+        console.log("AnimateCardOut, dirección:", direction);
+        const xSign = direction === 'like' ? 1 : -1;
+        currentCard.style.transform = `translate(${xSign * 500}px, ${Math.random() * 100 - 50}px) rotate(${xSign * 30}deg)`;
+        currentCard.style.opacity = '0';
+        setTimeout(() => { if (currentCard) currentCard.remove(); currentCard = null; loadNextName(); }, 300);
+    }
+
+    async function performAction(action, nameId) {
+        console.log(`PerformAction: ${action}, NameID: ${nameId}`);
+        if (!nameId && (action === 'like' || action === 'pass')) {
+            console.error("PerformAction: Name ID es requerido para 'like' o 'pass'.");
+            if(currentCard) currentCard.style.transform = 'translate(0,0) rotate(0deg)'; return;
+        }
+        let url; const options = { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } };
+        if (action === 'like') url = `/like/${nameId}`;
+        else if (action === 'pass') {
+            url = `/pass`; const formData = new FormData(); formData.append('name_id', nameId); options.body = formData;
+        } else if (action === 'undo') url = `/undo`;
+        else { console.error("PerformAction: Acción desconocida:", action); return; }
+        
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({message: "Error desconocido del servidor."}));
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message}`);
+            }
+            const data = await response.json(); 
+            console.log("PerformAction response data:", data);
+
+            if (data.status === 'success') {
+                if (action !== 'undo') { 
+                    if (currentCard) animateCardOut(action); 
+                    else loadNextName(data.next_name); 
+                } else { 
+                    loadNextName(data.undone_name);
+                }
+                updateUndoButton(data.can_undo);
+                updateMilestoneDynamicDuoMessage(data.milestone_reached, data.next_name || data.undone_name);
+                updateRemainingCount(data.remaining_count);
+                
+                if (data.newly_unlocked_achievements && Array.isArray(data.newly_unlocked_achievements)) {
+                    data.newly_unlocked_achievements.forEach(ach => showAchievementToast(ach));
+                }
+
+            } else { 
+                console.error('PerformAction failed en el backend:', data.message);
+                if (currentCard) currentCard.style.transform = 'translate(0,0) rotate(0deg)';
+            }
+        } catch (error) { 
+            console.error('Error en performAction (fetch):', error);
+            if (currentCard && action !== 'undo') currentCard.style.transform = 'translate(0,0) rotate(0deg)';
+        }
+    }
+
+    function loadNextName(nameData = null) {
+        console.log("loadNextName, nameData:", nameData);
+        if (nameData && nameData.id) { // Comprobar que nameData y su id existan
+            renderNameCard(nameData); toggleActionButtons(true);
+            if (noMoreNamesMessage) noMoreNamesMessage.classList.add('hidden');
+        } else if (nameData === null && arguments.length > 0) { // Se pasó null explícitamente (ej. no hay undone_name)
+             console.log("loadNextName: No more names to show (explicitly null).");
+             if (currentCard) currentCard.remove(); currentCard = null;
+             toggleActionButtons(false);
+             if (noMoreNamesMessage) noMoreNamesMessage.classList.remove('hidden');
+             // No llamar a fetch si sabemos que no hay más nombres por 'undo'
+        }
+        else {
+            console.log("loadNextName: Fetching next name from server...");
+            fetch("{{ url_for('get_next_name') }}")
+                .then(response => { if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`); return response.json(); })
+                .then(data => {
+                    console.log("loadNextName response data:", data);
+                    if (data.name) {
+                        renderNameCard(data.name); toggleActionButtons(true);
+                        if (noMoreNamesMessage) noMoreNamesMessage.classList.add('hidden');
+                    } else {
+                        console.log("loadNextName: No more names from server.");
+                        if (currentCard) currentCard.remove(); currentCard = null;
+                        toggleActionButtons(false);
+                        if (noMoreNamesMessage) noMoreNamesMessage.classList.remove('hidden');
+                    }
+                    updateUndoButton(data.can_undo);
+                    updateMilestoneDynamicDuoMessage(data.milestone_reached, data.name);
+                    updateRemainingCount(data.remaining_count);
+
+                    if (data.newly_unlocked_achievements && Array.isArray(data.newly_unlocked_achievements)) {
+                        data.newly_unlocked_achievements.forEach(ach => showAchievementToast(ach));
+                    }
+                })
+                .catch(error => { 
+                    console.error('Error en loadNextName (fetch):', error);
+                    toggleActionButtons(false); if (noMoreNamesMessage) noMoreNamesMessage.classList.remove('hidden'); 
+                });
+        }
+    }
+
+    function renderNameCard(name) {
+        if (!name || !name.id) { 
+            console.warn("renderNameCard: 'name' es null o inválido. No se renderizará la tarjeta.");
+            if (currentCard) currentCard.remove(); currentCard = null;
+            toggleActionButtons(false); if (noMoreNamesMessage) noMoreNamesMessage.classList.remove('hidden'); 
+            updateUndoButton(false); 
+            updateMilestoneDynamicDuoMessage(sessionStorage.getItem('milestoneDynamicDuoReached') === 'true', null); 
+            updateRemainingCount(0); return;
+        }
+        console.log("renderNameCard, name:", name.name_text);
+        if (currentCard) currentCard.remove(); 
+        const currentEmoji = getRandomEmoji(); 
+        const cardHTML = `
+            <div id="nameCard" data-name-id="${name.id}" class="name-card absolute bg-white rounded-2xl shadow-2xl p-8 w-full text-center cursor-grab select-none" style="touch-action: none; opacity: 0; transform: scale(0.8); transition: opacity 0.3s ease-out, transform 0.3s ease-out;">
+                <div class="mb-6">
+                    <p class="text-sm text-gray-500 uppercase tracking-wider">${name.gender.charAt(0).toUpperCase() + name.gender.slice(1)} ${name.ranking ? `| Ranking #${name.ranking}` : ''}</p>
+                    <h2 class="text-5xl md:text-6xl font-bold my-3 ${name.gender === 'niño' ? 'text-blue-600' : 'text-pink-600'}"><span class="name-emoji mr-2">${currentEmoji}</span>${name.name_text}</h2>
+                    <p class="text-gray-600 text-sm">${name.category}</p>
+                </div>
+                <div id="likeIndicator" class="absolute top-1/2 left-4 -translate-y-1/2 text-green-500 text-4xl font-bold opacity-0 transition-opacity duration-200">LIKE</div>
+                <div id="passIndicator" class="absolute top-1/2 right-4 -translate-y-1/2 text-red-500 text-4xl font-bold opacity-0 transition-opacity duration-200">PASS</div>
+            </div>`;
+        cardContainer.insertAdjacentHTML('beforeend', cardHTML);
+        currentCard = document.getElementById('nameCard');
+        requestAnimationFrame(() => { // Usar requestAnimationFrame para asegurar que el elemento esté listo para la transición
+             currentCard.style.opacity = '1';
+             currentCard.style.transform = 'scale(1)';
+        });
+        setupHammer(currentCard);
+    }
+    
+    function toggleActionButtons(enable) { console.log("toggleActionButtons, enable:", enable); if(likeButton) likeButton.disabled = !enable; if(passButton) passButton.disabled = !enable; }
+    function updateUndoButton(canUndo) { console.log("updateUndoButton, canUndo:", canUndo); if(undoButton) undoButton.disabled = !canUndo; }
+    
+    function updateMilestoneDynamicDuoMessage(milestoneIsReached, hasNextName) {
+        console.log(`updateMilestoneDynamicDuoMessage: reached=${milestoneIsReached}, hasNext=${!!hasNextName}`);
+        sessionStorage.setItem('milestoneDynamicDuoReached', String(milestoneIsReached)); 
+        if (milestoneDynamicDuoMessageEl) {
+            milestoneDynamicDuoMessageEl.classList.toggle('hidden', !(milestoneIsReached && hasNextName));
+        }
+    }
+
+    function updateRemainingCount(count) { console.log("updateRemainingCount, count:", count); if (countValueSpan) { if (typeof count === 'number' && count >= 0) countValueSpan.textContent = count; else countValueSpan.textContent = '0'; } }
+
+    // --- Configuración Inicial ---
+    console.log("--- Configuración Inicial ---");
+    if (currentCard) { console.error("Error en lógica inicial: currentCard no debería existir.");} 
+    else { console.log("No hay tarjeta inicial. Llamando a loadNextName..."); loadNextName(); }
+
+    // Manejadores para los botones
+    if(likeButton) { likeButton.addEventListener('click', () => { if (currentCard) performAction('like', currentCard.dataset.nameId); else console.warn("Botón Like: No hay currentCard."); }); }
+    if(passButton) { passButton.addEventListener('click', () => { if (currentCard) performAction('pass', currentCard.dataset.nameId); else console.warn("Botón Pass: No hay currentCard."); }); }
+    if(undoButton) { undoButton.addEventListener('click', () => { performAction('undo', null); }); }
+    
+    console.log("Fetching initial undo status...");
+    fetch("{{ url_for('get_undo_status') }}")
+        .then(response => response.json()).then(data => { console.log("Initial undo status data:", data); updateUndoButton(data.can_undo); })
+        .catch(error => console.error('Error fetching initial undo status:', error));
+    
+    {% if milestone_reached is defined %}
+        console.log("Milestone status from Jinja (initial for Duo Dinámico):", {{ milestone_reached | tojson }});
+        updateMilestoneDynamicDuoMessage({{ milestone_reached | tojson }}, true); 
+    {% else %}
+        updateMilestoneDynamicDuoMessage(false, true);
+    {% endif %}
+
+});
+</script>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block title %}Mis Logros{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
+    <div class="text-center mb-10">
+        <h1 class="text-3xl sm:text-4xl font-bold text-purple-700">🏆 Tus Logros 🏆</h1>
+        {% if current_user %}
+        <p class="text-lg text-gray-600 mt-2">¡Mira todo lo que has conseguido, {{ current_user.username | capitalize }}!</p>
+        {% endif %}
+    </div>
+
+    {% if achievements_list %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {% for ach in achievements_list %}
+                <div class="flex flex-col items-center p-4 sm:p-6 rounded-xl shadow-lg 
+                            {% if ach.achieved %} bg-gradient-to-br from-green-100 to-emerald-100 border-2 border-green-400 
+                            {% else %} bg-gray-100 border border-gray-300 opacity-60 hover:opacity-100 transition-opacity {% endif %}">
+                    <div class="text-4xl sm:text-5xl mb-3">
+                        {{ ach.icon | safe }}
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-semibold text-center
+                               {% if ach.achieved %} text-green-700 
+                               {% else %} text-gray-700 {% endif %}">
+                        {{ ach.name }}
+                    </h3>
+                    <p class="text-xs sm:text-sm text-center mt-1 flex-grow
+                              {% if ach.achieved %} text-green-600 
+                              {% else %} text-gray-500 {% endif %}">
+                        {{ ach.desc }} {# Cambiado de description a desc para coincidir con app.py #}
+                    </p>
+                    {% if ach.achieved %}
+                        <span class="mt-3 inline-block px-3 py-1 text-xs font-bold text-white bg-green-500 rounded-full shadow">¡Conseguido!</span>
+                    {% else %}
+                        <span class="mt-3 inline-block px-3 py-1 text-xs font-semibold text-gray-100 bg-gray-400 rounded-full">Pendiente</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-center text-gray-600">No se pudieron cargar los logros o aún no tienes ninguno.</p>
+    {% endif %}
+
+     <div class="mt-12 text-center">
+        <a href="{{ url_for('index') }}"
+           class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">
+            Volver a Elegir Nombres
+        </a>
+    </div>
+</div>
+{% endblock %}

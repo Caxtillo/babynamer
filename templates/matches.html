@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+{% block title %}Nombres en Común{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-2 sm:px-4 py-6 sm:py-8"> {# Ajustado padding del contenedor principal #}
+    <div class="text-center mb-8 md:mb-12">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-purple-700">¡Nombres en Común! 💕</h1>
+        <p class="text-base sm:text-lg text-gray-600 mt-2 sm:mt-3">
+            Estos son los nombres que tanto a <strong>{{ user_luis.username | capitalize }}</strong> como a <strong>{{ user_franyeglys.username | capitalize }}</strong> les han gustado.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10"> {# Gap ajustado para móviles #}
+        
+        <!-- Columna de Niños en Común -->
+        <div class="bg-blue-50 p-4 sm:p-6 rounded-xl shadow-lg"> {# Padding de la columna ajustado #}
+            <h2 class="text-2xl sm:text-3xl font-semibold text-blue-600 mb-4 sm:mb-6 text-center">
+                <span class="align-middle text-2xl sm:text-3xl">♂️</span> Niños en Común
+            </h2>
+            {% if matched_boy_names %}
+                <ul class="space-y-3 sm:space-y-4"> {# Space-y ajustado #}
+                    {% for name in matched_boy_names %}
+                    <li class="bg-white p-3 sm:p-4 rounded-lg shadow-md transform hover:scale-105 transition-transform duration-200"> {# Padding de la tarjeta de nombre ajustado #}
+                        <p class="text-xl sm:text-2xl font-medium text-blue-700">{{ name.name_text }}</p>
+                        <p class="text-xs sm:text-sm text-gray-500 capitalize mt-1">{{ name.category }} {% if name.ranking %}(Ranking: {{ name.ranking }}){% endif %}</p>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center py-8 sm:py-10">
+                    <p class="text-lg sm:text-xl text-gray-500">😢 Aún no hay nombres de niño en común.</p>
+                    <p class="text-gray-400 mt-2 text-sm sm:text-base">¡Sigan eligiendo!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Columna de Niñas en Común -->
+        <div class="bg-pink-50 p-4 sm:p-6 rounded-xl shadow-lg"> {# Padding de la columna ajustado #}
+            <h2 class="text-2xl sm:text-3xl font-semibold text-pink-600 mb-4 sm:mb-6 text-center">
+                <span class="align-middle text-2xl sm:text-3xl">♀️</span> Niñas en Común
+            </h2>
+            {% if matched_girl_names %}
+                <ul class="space-y-3 sm:space-y-4"> {# Space-y ajustado #}
+                    {% for name in matched_girl_names %}
+                    <li class="bg-white p-3 sm:p-4 rounded-lg shadow-md transform hover:scale-105 transition-transform duration-200"> {# Padding de la tarjeta de nombre ajustado #}
+                        <p class="text-xl sm:text-2xl font-medium text-pink-700">{{ name.name_text }}</p>
+                        <p class="text-xs sm:text-sm text-gray-500 capitalize mt-1">{{ name.category }} {% if name.ranking %}(Ranking: {{ name.ranking }}){% endif %}</p>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center py-8 sm:py-10">
+                     <p class="text-lg sm:text-xl text-gray-500">😢 Aún no hay nombres de niña en común.</p>
+                     <p class="text-gray-400 mt-2 text-sm sm:text-base">¡Sigan eligiendo!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-12 md:mt-16 text-center">
+        <a href="{{ url_for('index') }}"
+           class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 text-base sm:text-lg">
+            Volver a Elegir Nombres
+        </a>
+    </div>
+
+</div>
+{% endblock %}

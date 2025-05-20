@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block title %}Seleccionar Usuario{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-xl">
+    <h1 class="text-3xl font-bold text-center text-purple-700 mb-8">Elige tu usuario</h1>
+    <form method="POST" action="{{ url_for('login') }}" class="space-y-6">
+        <div>
+            <label for="user_id" class="block text-sm font-medium text-gray-700 mb-2">Selecciona tu nombre:</label>
+            <select name="user_id" id="user_id" required
+                    class="mt-1 block w-full py-3 px-4 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                {% for user in users %}
+                <option value="{{ user.id }}">{{ user.username | capitalize }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                Entrar
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

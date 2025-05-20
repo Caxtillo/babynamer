@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+{% block title %}Favoritos de {{ other_user.username | capitalize }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
+    <div class="text-center mb-8 md:mb-12">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-purple-700">
+            Viendo los Favoritos de <span class="text-pink-500">{{ other_user.username | capitalize }}</span> 💕
+        </h1>
+        {% if current_user %}
+        <p class="text-base sm:text-lg text-gray-600 mt-2 sm:mt-3">
+            Aquí puedes ver qué nombres le gustan a {{ other_user.username | capitalize }} y marcar los que también te gusten.
+        </p>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+        
+        <!-- Columna de Niños Favoritos del Otro Usuario -->
+        <div class="bg-blue-50 p-4 sm:p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl sm:text-3xl font-semibold text-blue-600 mb-4 sm:mb-6 text-center">
+                <span class="align-middle text-2xl sm:text-3xl">♂️</span> Niños que le gustan a {{ other_user.username | capitalize }}
+            </h2>
+            {% if other_user_boy_names %}
+                <ul class="space-y-3 sm:space-y-4">
+                    {% for name in other_user_boy_names %}
+                    <li data-id="{{ name.id }}" class="bg-white p-3 sm:p-4 rounded-lg shadow-md flex justify-between items-center">
+                        <div>
+                            <span class="text-xl sm:text-2xl font-medium text-blue-700">{{ name.name_text }}</span>
+                            <p class="text-xs sm:text-sm text-gray-500 capitalize mt-1">{{ name.category }} {% if name.ranking %}(#{{ name.ranking }}){% endif %}</p>
+                        </div>
+                        <div>
+                            {% if current_user %} {# Solo mostrar botón si hay un usuario viendo #}
+                                {% if name.id in current_user_fav_ids %}
+                                    <span class="text-sm font-semibold text-green-600 py-1 px-2 rounded-full bg-green-100">Ya te gusta 👍</span>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('like_name_from_other_favs', name_id=name.id, other_username=other_user.username) }}">
+                                        <button type="submit" 
+                                                class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold py-1 px-3 rounded-lg shadow-md transition-colors">
+                                            Me Gusta
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center py-8 sm:py-10">
+                    <p class="text-lg sm:text-xl text-gray-500">😢 {{ other_user.username | capitalize }} aún no tiene nombres de niño favoritos.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Columna de Niñas Favoritas del Otro Usuario -->
+        <div class="bg-pink-50 p-4 sm:p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl sm:text-3xl font-semibold text-pink-600 mb-4 sm:mb-6 text-center">
+                <span class="align-middle text-2xl sm:text-3xl">♀️</span> Niñas que le gustan a {{ other_user.username | capitalize }}
+            </h2>
+            {% if other_user_girl_names %}
+                <ul class="space-y-3 sm:space-y-4">
+                    {% for name in other_user_girl_names %}
+                    <li data-id="{{ name.id }}" class="bg-white p-3 sm:p-4 rounded-lg shadow-md flex justify-between items-center">
+                        <div>
+                            <span class="text-xl sm:text-2xl font-medium text-pink-700">{{ name.name_text }}</span>
+                            <p class="text-xs sm:text-sm text-gray-500 capitalize mt-1">{{ name.category }} {% if name.ranking %}(#{{ name.ranking }}){% endif %}</p>
+                        </div>
+                        <div>
+                             {% if current_user %}
+                                {% if name.id in current_user_fav_ids %}
+                                    <span class="text-sm font-semibold text-green-600 py-1 px-2 rounded-full bg-green-100">Ya te gusta 👍</span>
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('like_name_from_other_favs', name_id=name.id, other_username=other_user.username) }}">
+                                        <button type="submit"
+                                                class="bg-green-500 hover:bg-green-600 text-white text-sm font-semibold py-1 px-3 rounded-lg shadow-md transition-colors">
+                                            Me Gusta
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center py-8 sm:py-10">
+                     <p class="text-lg sm:text-xl text-gray-500">😢 {{ other_user.username | capitalize }} aún no tiene nombres de niña favoritos.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-12 md:mt-16 text-center space-x-4">
+        <a href="{{ url_for('index') }}"
+           class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 text-base sm:text-lg">
+            Elegir Nombres
+        </a>
+        {% if current_user %}
+        <a href="{{ url_for('favorites') }}"
+           class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 text-base sm:text-lg">
+            Mis Favoritos
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

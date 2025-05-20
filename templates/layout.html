@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Comparador de Nombres{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 min-h-screen font-sans text-gray-800">
+
+<nav class="bg-white shadow-lg p-4 mb-8" x-data="{ open: false }">
+    <div class="container mx-auto flex justify-between items-center">
+        <a href="{{ url_for('index') }}" class="text-2xl font-bold text-purple-600 hover:text-purple-800">BabyNamer</a>
+
+        <!-- Botón Hamburguesa para móviles -->
+        <div class="md:hidden">
+            <button @click="open = !open" class="text-gray-700 hover:text-purple-600 focus:outline-none focus:text-purple-600" aria-label="Abrir menú">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" style="display: none;" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Enlaces de Navegación para Escritorio -->
+        <div class="hidden md:flex md:items-center space-x-1 lg:space-x-3">
+            {% if session.user_id %}
+                <span class="text-gray-700 text-sm hidden lg:inline mr-2">Usuario: <strong class="text-purple-700">{{ session.username | capitalize }}</strong></span>
+                <a href="{{ url_for('achievements_page_route') }}" class="nav-link-desktop text-amber-600 hover:text-amber-800 font-semibold">Logros 🏆</a> {# <--- ENLACE AÑADIDO #}
+                <a href="{{ url_for('add_custom_name') }}" class="nav-link-desktop">Añadir ✨</a>
+                <a href="{{ url_for('matches_page') }}" class="nav-link-desktop text-green-600 hover:text-green-800 font-semibold">Matches ❤️</a>
+                <a href="{{ url_for('favorites') }}" class="nav-link-desktop">Favoritos</a>
+                {% if current_user and current_user.username == 'luis' %}
+                    <a href="{{ url_for('view_other_favorites', username_to_view='franyeglys') }}" class="nav-link-desktop">Ver Favs de Franyeglys</a>
+                {% elif current_user and current_user.username == 'franyeglys' %}
+                    <a href="{{ url_for('view_other_favorites', username_to_view='luis') }}" class="nav-link-desktop">Ver Favs de Luis</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="nav-link-desktop text-red-500 hover:text-red-700">Salir</a>
+            {% else %}
+                <a href="{{ url_for('achievements_page_route') }}" class="nav-link-desktop text-amber-600 hover:text-amber-800 font-semibold">Logros 🏆</a> {# <--- ENLACE AÑADIDO #}
+                <a href="{{ url_for('matches_page') }}" class="nav-link-desktop text-green-600 hover:text-green-800 font-semibold">Matches ❤️</a>
+                <a href="{{ url_for('login') }}" class="nav-link-desktop">Entrar</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Menú Desplegable para Móviles (Controlado por Alpine.js) -->
+    <div x-show="open" 
+         @click.away="open = false" 
+         class="md:hidden mt-3 pb-2 space-y-1"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 transform -translate-y-2"
+         x-transition:enter-end="opacity-100 transform translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 transform translate-y-0"
+         x-transition:leave-end="opacity-0 transform -translate-y-2"
+         style="display: none;"
+         >
+        {% if session.user_id %}
+            <div class="px-3 py-2 text-gray-600">Usuario: <strong class="text-purple-700">{{ session.username | capitalize }}</strong></div>
+            <a href="{{ url_for('achievements_page_route') }}" class="nav-link-mobile text-amber-700">Logros 🏆</a> {# <--- ENLACE AÑADIDO #}
+            <a href="{{ url_for('add_custom_name') }}" class="nav-link-mobile">Añadir Nombre ✨</a>
+            <a href="{{ url_for('matches_page') }}" class="nav-link-mobile text-green-700">Matches ❤️</a>
+            {% if current_user and current_user.username == 'luis' %}
+                    <a href="{{ url_for('view_other_favorites', username_to_view='franyeglys') }}" class="nav-link-desktop">Ver Favs de Franyeglys</a>
+            {% elif current_user and current_user.username == 'franyeglys' %}
+                    <a href="{{ url_for('view_other_favorites', username_to_view='luis') }}" class="nav-link-desktop">Ver Favs de Luis</a>
+            {% endif %}
+            <a href="{{ url_for('favorites') }}" class="nav-link-mobile">Mis Favoritos</a>
+            <a href="{{ url_for('logout') }}" class="nav-link-mobile text-red-600">Cerrar Sesión</a>
+        {% else %}
+            <a href="{{ url_for('achievements_page_route') }}" class="nav-link-mobile text-amber-700">Logros 🏆</a> {# <--- ENLACE AÑADIDO #}
+            <a href="{{ url_for('matches_page') }}" class="nav-link-mobile text-green-700">Matches ❤️</a>
+            <a href="{{ url_for('login') }}" class="nav-link-mobile">Iniciar Sesión</a>
+        {% endif %}
+    </div>
+</nav>
+
+<main class="container mx-auto p-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div x-data="{ showMsg: true }" x-show="showMsg" x-init="setTimeout(() => showMsg = false, 20000)"
+                     class="p-4 mb-4 text-sm rounded-lg
+                     {% if category == 'error' %} bg-red-100 text-red-700
+                     {% elif category == 'success' %} bg-green-100 text-green-700
+                     {% elif category == 'warning' %} bg-yellow-100 text-yellow-700
+                     {% else %} bg-blue-100 text-blue-700 {% endif %}"
+                     role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="text-center text-gray-600 mt-12 pb-6">
+    <p>2025 Tu App de Nombres. ¡Eligiendo juntos!</p> {# Actualizado el año ;) #}
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
