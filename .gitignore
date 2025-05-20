@@ -5,6 +5,7 @@ ENV/
 env/
 env.bak/
 venv.bak/
+instance/
 
 # Archivos de Python compilados y caches
 __pycache__/
